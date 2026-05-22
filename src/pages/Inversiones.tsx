@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import {
   Plus,
   Search,
@@ -237,9 +237,8 @@ export default function Inversiones() {
                 const isExpanded = expandedId === inv.id;
 
                 return (
-                  <>
+                  <Fragment key={inv.id}>
                     <tr
-                      key={inv.id}
                       className="border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer"
                       onClick={() =>
                         setExpandedId(isExpanded ? null : inv.id)
@@ -366,7 +365,7 @@ export default function Inversiones() {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr key={`${inv.id}-exp`} className="border-b border-gray-800/50 bg-gray-800/20">
+                      <tr className="border-b border-gray-800/50 bg-gray-800/20">
                         <td colSpan={7} className="px-5 py-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
@@ -428,7 +427,7 @@ export default function Inversiones() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
               {filtered.length === 0 && (
