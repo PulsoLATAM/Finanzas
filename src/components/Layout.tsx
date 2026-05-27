@@ -117,10 +117,18 @@ export default function Layout() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const { dolar, inflacion } = await actualizarDatosMacro();
+    const { dolar, inflacion, spy, spyPrecio } = await actualizarDatosMacro();
 
-    // Check alerts after refresh
-    const { datosMacro: dm } = useStore.getState();
+    const { datosMacro: dm, inversiones: invActualizadas } = useStore.getState();
+
+    if (spy && spyPrecio) {
+      const spyInv = invActualizadas.find((inv) => inv.ticker === 'SPY.BA');
+      agregarAlerta({
+        tipo: 'info',
+        titulo: 'SPY.BA actualizado',
+        descripcion: `Precio: $${spyPrecio.toFixed(0)} ARS/acción${spyInv ? ` · Total: $${spyInv.valorActual.toLocaleString('es-AR')}` : ''}`,
+      });
+    }
     if (dm.dolarMEP && dm.dolarMEP >= alertaConfig.dolarMEPUmbral) {
       agregarAlerta({
         tipo: 'warning',
@@ -138,7 +146,7 @@ export default function Layout() {
         descripcion: `Inflación mensual en ${formatPorc(dm.inflacionMensual)}, supera umbral de ${alertaConfig.inflacionMensualUmbral}%`,
       });
     }
-    inversiones.forEach((inv) => {
+    invActualizadas.forEach((inv) => {
       const rend = calcularRendimientoNominal(inv);
       if (alertaConfig.rendimientoNegativo && rend < 0) {
         agregarAlerta({
@@ -149,11 +157,11 @@ export default function Layout() {
       }
     });
 
-    if (!dolar && !inflacion) {
+    if (!dolar && !inflacion && !spy) {
       agregarAlerta({
         tipo: 'info',
-        titulo: 'Actualización manual',
-        descripcion: 'No se pudieron obtener datos externos. Verifique la conexión.',
+        titulo: 'Sin conexión a APIs externas',
+        descripcion: 'No se pudieron obtener datos actualizados. Verificá la conexión.',
       });
     }
     setRefreshing(false);
