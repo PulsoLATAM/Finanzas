@@ -133,6 +133,45 @@ export function calcularInflacionAcumuladaAnual(snapshots: SnapshotMensual[]): n
   );
 }
 
+// Return desde el 1° de enero (o desde la compra si es más reciente)
+export function calcularYTD_inversion(inv: Inversion): number {
+  const hoy = new Date();
+  const inicioAnio = `${hoy.getFullYear()}-01-01`;
+  const refFecha = inv.fechaCompra > inicioAnio ? inv.fechaCompra : inicioAnio;
+
+  const previos = inv.historialValores
+    .filter((h) => h.fecha <= refFecha)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+  const valorRef = previos.length > 0 ? previos[0].valor : inv.montoInicial;
+  if (valorRef === 0) return 0;
+  return (inv.valorActual - valorRef) / valorRef;
+}
+
+// Proyección al 31/12 usando el ritmo anualizado actual
+export function calcularYTC_inversion(inv: Inversion): number {
+  const hoy = new Date();
+  const finAnio = new Date(hoy.getFullYear(), 11, 31);
+  const diasRestantes = differenceInDays(finAnio, hoy);
+  if (diasRestantes <= 0) return 0;
+  const rendAnualizado = calcularRendimientoAnualizado(inv);
+  // Proyección del valor actual hasta fin de año
+  return Math.pow(1 + rendAnualizado, diasRestantes / 365) - 1;
+}
+
+// Return desde el 1° del mes actual (usando historial)
+export function calcularMTD(inv: Inversion): number | null {
+  const hoy = new Date();
+  const inicioMes = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-01`;
+
+  const previos = inv.historialValores
+    .filter((h) => h.fecha < inicioMes)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+  if (previos.length === 0) return null; // Comprada este mes, no hay referencia anterior
+  return (inv.valorActual - previos[0].valor) / previos[0].valor;
+}
+
 export function distribucionPorCategoria(
   inversiones: Inversion[]
 ): { categoria: string; valor: number; porcentaje: number }[] {
