@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico de Cultura de Reconocimiento</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #faf8f5;
+    --white: #ffffff;
+    --terracotta: #c4614a;
+    --terracotta-light: #f0ded9;
+    --terracotta-hover: #a84d39;
+    --mustard: #d4952a;
+    --mustard-light: #fdf3e0;
+    --text: #2d2d2d;
+    --text-muted: #6b6b6b;
+    --border: #e8e0d8;
+    --green: #3a7d5a;
+    --green-light: #d6efe4;
+    --yellow: #c49a1a;
+    --yellow-light: #fdf6d6;
+    --orange: #c4611a;
+    --orange-light: #fde8d6;
+    --red: #b02a2a;
+    --red-light: #fbd9d9;
+    --radius: 12px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header .logo {
+    width: 32px; height: 32px;
+    background: var(--terracotta);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; flex-shrink: 0;
+  }
+  .app-header h1 { font-size: 15px; font-weight: 600; color: var(--text); }
+  .app-header .subtitle { font-size: 12px; color: var(--text-muted); }
+
+  /* ── CONTAINER ── */
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  /* ── START SCREEN ── */
+  .start-hero {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+  .start-hero .icon-big {
+    width: 72px; height: 72px;
+    background: var(--terracotta-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    margin: 0 auto 20px;
+  }
+  .start-hero h2 {
+    font-size: 26px; font-weight: 700;
+    color: var(--text); margin-bottom: 10px;
+    line-height: 1.3;
+  }
+  .start-hero p {
+    color: var(--text-muted); font-size: 15px;
+    max-width: 420px; margin: 0 auto;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+  }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 13px; font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+  }
+  input[type="text"], textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input[type="text"]:focus, textarea:focus {
+    border-color: var(--terracotta);
+    background: var(--white);
+  }
+  textarea { resize: vertical; min-height: 100px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px;
+    padding: 13px 28px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--terracotta);
+    color: white;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--terracotta-hover); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--white);
+    color: var(--terracotta);
+    border: 1.5px solid var(--terracotta);
+    width: 100%;
+  }
+  .btn-secondary:hover { background: var(--terracotta-light); }
+  .btn-outline {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--terracotta); color: var(--terracotta); }
+
+  .btn-row {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-top: 4px;
+  }
+
+  .team-info-box {
+    background: var(--mustard-light);
+    border: 1px solid #e8d49a;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .team-info-box strong { color: var(--text); }
+  .team-info-box .icon { font-size: 18px; flex-shrink: 0; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrapper {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    position: sticky;
+    top: 65px;
+    z-index: 99;
+  }
+  .progress-meta {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px; color: var(--text-muted);
+  }
+  .progress-meta strong { color: var(--terracotta); }
+  .progress-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--terracotta), var(--mustard));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── QUESTIONNAIRE ── */
+  .dimension-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--terracotta);
+    margin-bottom: 6px;
+  }
+  .question-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 22px 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  }
+  .question-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .question-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    background: var(--terracotta-light);
+    color: var(--terracotta);
+    border-radius: 50%;
+    font-size: 11px; font-weight: 700;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .likert-scale {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .likert-btn {
+    flex: 1; min-width: 56px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    padding: 10px 4px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .likert-btn .num {
+    font-size: 17px; font-weight: 700; color: var(--text-muted);
+    transition: color 0.15s;
+  }
+  .likert-btn .lbl {
+    font-size: 10px; color: var(--text-muted);
+    text-align: center; line-height: 1.2;
+    transition: color 0.15s;
+  }
+  .likert-btn:hover {
+    border-color: var(--terracotta);
+    background: var(--terracotta-light);
+  }
+  .likert-btn:hover .num, .likert-btn:hover .lbl { color: var(--terracotta); }
+  .likert-btn.selected {
+    border-color: var(--terracotta);
+    background: var(--terracotta);
+  }
+  .likert-btn.selected .num,
+  .likert-btn.selected .lbl { color: white; }
+
+  .open-question {
+    margin-top: 8px;
+  }
+  .open-question .question-text { margin-bottom: 12px; }
+  .optional-tag {
+    display: inline-block;
+    background: var(--mustard-light);
+    color: var(--mustard);
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 8px; border-radius: 99px;
+    margin-left: 8px; vertical-align: middle;
+  }
+
+  .submit-area {
+    margin-top: 28px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .error-msg {
+    background: #fbd9d9; border: 1px solid #f0b0b0;
+    border-radius: 8px; padding: 12px 14px;
+    font-size: 13px; color: var(--red);
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  /* ── REPORT ── */
+  .report-header {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+  .report-header .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--terracotta-light);
+    color: var(--terracotta);
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 4px 14px; border-radius: 99px;
+    margin-bottom: 14px;
+  }
+  .report-header h2 {
+    font-size: 24px; font-weight: 700;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .report-header .meta {
+    font-size: 13px; color: var(--text-muted);
+  }
+  .report-header .respondents {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--mustard-light);
+    color: var(--mustard);
+    font-weight: 600; font-size: 13px;
+    padding: 4px 12px; border-radius: 99px;
+    margin-top: 8px;
+  }
+
+  .section-title {
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* Summary table */
+  .dim-table { width: 100%; border-collapse: collapse; }
+  .dim-table th {
+    text-align: left; font-size: 11px;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-muted); padding: 0 10px 10px;
+  }
+  .dim-table th:last-child { text-align: center; }
+  .dim-table td {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .dim-table tr:first-child td { border-top: none; }
+  .dim-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .dim-score {
+    font-size: 20px; font-weight: 700;
+    white-space: nowrap; text-align: right;
+  }
+  .dim-score .total { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 99px;
+    white-space: nowrap;
+  }
+  .status-pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .s-green  { background: var(--green-light);  color: var(--green);  }
+  .s-green  .dot { background: var(--green); }
+  .s-yellow { background: var(--yellow-light); color: var(--yellow); }
+  .s-yellow .dot { background: var(--yellow); }
+  .s-orange { background: var(--orange-light); color: var(--orange); }
+  .s-orange .dot { background: var(--orange); }
+  .s-red    { background: var(--red-light);    color: var(--red);    }
+  .s-red    .dot { background: var(--red); }
+
+  /* Score bar */
+  .score-bar-wrap {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .score-bar-track {
+    flex: 1; height: 8px; background: var(--border);
+    border-radius: 99px; overflow: hidden; min-width: 60px;
+  }
+  .score-bar-fill { height: 100%; border-radius: 99px; }
+
+  /* Insight cards */
+  .insight-card {
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid;
+  }
+  .insight-card.strength {
+    background: var(--green-light); border-color: #b2ddc9;
+  }
+  .insight-card.opportunity {
+    background: var(--orange-light); border-color: #f5c49a;
+  }
+  .insight-card .ic-label {
+    font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .insight-card.strength .ic-label { color: var(--green); }
+  .insight-card.opportunity .ic-label { color: var(--orange); }
+  .insight-card .ic-dim { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .insight-card.strength .ic-dim { color: var(--green); }
+  .insight-card.opportunity .ic-dim { color: var(--orange); }
+  .insight-card .ic-text { font-size: 14px; color: var(--text); margin-bottom: 8px; }
+  .insight-card .ic-action {
+    font-size: 13px; color: var(--text-muted);
+    display: flex; align-items: flex-start; gap: 6px;
+    margin-top: 6px;
+  }
+  .insight-card .ic-action::before {
+    content: '→'; flex-shrink: 0; color: var(--orange); font-weight: 700;
+  }
+
+  /* Dispersion */
+  .dispersion-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .dispersion-item:last-child { border-bottom: none; }
+  .dispersion-q { font-size: 14px; color: var(--text); margin-bottom: 6px; }
+  .dispersion-range {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+  }
+  .d-min { color: var(--red); font-weight: 700; }
+  .d-max { color: var(--green); font-weight: 700; }
+  .d-gap { color: var(--text-muted); font-size: 12px; }
+
+  /* Open answers */
+  .open-answer {
+    background: var(--mustard-light);
+    border-left: 3px solid var(--mustard);
+    padding: 12px 14px;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 10px;
+    font-size: 14px; color: var(--text);
+    font-style: italic;
+  }
+  .open-answer .responder {
+    font-size: 11px; font-weight: 700; color: var(--mustard);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 4px; font-style: normal;
+  }
+
+  /* PDF / export */
+  .report-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 28px;
+  }
+  .report-actions .btn { flex: 1; min-width: 140px; }
+
+  .no-data-msg {
+    text-align: center; color: var(--text-muted);
+    font-size: 14px; padding: 20px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 480px) {
+    .container { padding: 20px 14px 60px; }
+    .likert-scale { gap: 4px; }
+    .likert-btn { min-width: 44px; padding: 8px 2px; }
+    .likert-btn .lbl { font-size: 9px; }
+    .dim-table .dim-name { font-size: 13px; }
+    .report-actions { flex-direction: column; }
+  }
+
+  /* ── PRINT / PDF ── */
+  @media print {
+    .app-header, .progress-wrapper, .report-actions, #screen-start, #screen-quiz { display: none !important; }
+    #screen-report { display: block !important; }
+    body { background: white; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">✦</div>
+  <div>
+    <div class="app-header h1">Cultura de Reconocimiento</div>
+    <div class="subtitle">Diagnóstico para equipos</div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════
+     SCREEN 1: START
+════════════════════════════════════════ -->
+<div id="screen-start" class="screen active">
+  <div class="container">
+
+    <div class="start-hero">
+      <div class="icon-big">🌱</div>
+      <h2>¿Cómo vive el reconocimiento en tu equipo?</h2>
+      <p>Completá este diagnóstico en 5 minutos y obtené un informe con las fortalezas y oportunidades de mejora.</p>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="input-name">Tu nombre</label>
+        <input type="text" id="input-name" placeholder="Ej: María González" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="input-team">Nombre del equipo</label>
+        <input type="text" id="input-team" placeholder="Ej: Equipo Comercial" autocomplete="off">
+      </div>
+      <div class="btn-row" style="margin-top: 8px;">
+        <button class="btn btn-primary" onclick="startQuiz()">Responder el cuestionario →</button>
+        <button class="btn btn-secondary" onclick="viewTeamReport()">Ver informe del equipo</button>
+      </div>
+      <div id="start-error" class="error-msg" style="margin-top:12px;"></div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px;">
+      🔒 Tus respuestas se guardan localmente. No se envían a ningún servidor.
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 2: QUESTIONNAIRE
+════════════════════════════════════════ -->
+<div id="screen-quiz" class="screen">
+
+  <div class="progress-wrapper">
+    <div class="progress-meta">
+      <span id="progress-label">Dimensión 1 de 5</span>
+      <strong id="progress-pct">0%</strong>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="quiz-context" class="team-info-box">
+      <span class="icon">👤</span>
+      <span id="quiz-context-text">—</span>
+    </div>
+
+    <div id="questions-container"></div>
+
+    <div class="submit-area">
+      <div id="quiz-error" class="error-msg">Por favor respondé todas las preguntas antes de enviar.</div>
+      <button class="btn btn-primary" onclick="submitQuiz()">Enviar respuestas y ver informe ✦</button>
+      <button class="btn btn-outline" onclick="backToStart()">← Volver al inicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 3: REPORT
+════════════════════════════════════════ -->
+<div id="screen-report" class="screen">
+  <div class="container" id="report-container">
+    <!-- dynamically generated -->
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+
+const LIKERT_LABELS = ['Nunca', 'Pocas veces', 'A veces', 'Frecuentemente', 'Siempre'];
+
+const DIMENSIONS = [
+  {
+    id: 'd1',
+    name: 'Sensación de reconocimiento general',
+    questions: [0,1,2,3],
+    interpretations: {
+      strength: 'Tu equipo tiene una base sólida de valoración mutua. Las personas se sienten vistas y motivadas, lo que potencia el compromiso y la energía colectiva.',
+      opportunity: 'Hay una oportunidad significativa para que las personas sientan que su trabajo es genuinamente valorado. Sin esa base, el compromiso se erosiona con el tiempo.',
+    },
+    suggestion: 'Empezá por nombrar explícitamente en cada reunión uno o dos aportes concretos que hizo alguien del equipo esa semana. La visibilidad cotidiana construye la base del reconocimiento.'
+  },
+  {
+    id: 'd2',
+    name: 'Reconocimiento individual vs. grupal',
+    questions: [4,5,6,7],
+    interpretations: {
+      strength: 'El reconocimiento en tu equipo llega tanto a nivel individual como colectivo, y se distribuye de manera equitativa entre quienes lideran y quienes ejecutan.',
+      opportunity: 'El reconocimiento tiende a ser genérico o a recaer siempre en las mismas personas. Esto genera sensación de invisibilidad en quienes más ejecutan.',
+    },
+    suggestion: 'Incorporá un ritual de "protagonista de la semana" rotativo: cada persona tiene su momento de reconocimiento específico por algo concreto que hizo, sin importar su rol.'
+  },
+  {
+    id: 'd3',
+    name: 'Reconocimiento por resultados vs. comportamientos',
+    questions: [8,9,10],
+    interpretations: {
+      strength: 'Tu equipo valora tanto los resultados como la forma de trabajar. Esto crea una cultura donde el proceso importa tanto como el destino.',
+      opportunity: 'El reconocimiento está demasiado atado a resultados finales. Los comportamientos que hacen posibles esos resultados (colaboración, esfuerzo, actitud) quedan invisibles.',
+    },
+    suggestion: 'Definí 3 comportamientos que el equipo considere valiosos (ej: "levantar la mano cuando algo no está claro", "sumar al que necesita ayuda") y nombralos cuando los veas en acción.'
+  },
+  {
+    id: 'd4',
+    name: 'Reconocimiento entre pares',
+    questions: [11,12,13],
+    interpretations: {
+      strength: 'Existe una cultura vibrante de agradecimiento entre compañeros/as. No se espera que solo los líderes reconozcan: el equipo se sostiene mutuamente.',
+      opportunity: 'El reconocimiento fluye mayormente desde arriba hacia abajo. Los pares raramente se reconocen entre sí, perdiendo una fuente poderosa de motivación horizontal.',
+    },
+    suggestion: 'Abrí un canal de Slack/Teams llamado #gracias o #reconocimiento y animá a que cada persona publique al menos un agradecimiento semanal a un/a compañero/a, siendo específica en el qué y el porqué.'
+  },
+  {
+    id: 'd5',
+    name: 'Oportunidad y autenticidad',
+    questions: [14,15,16,17],
+    interpretations: {
+      strength: 'El reconocimiento en tu equipo llega en el momento justo y se siente genuino. Los espacios de celebración se usan de verdad, no como formalidad.',
+      opportunity: 'El reconocimiento suele llegar tarde o se siente genérico y formal. Un "buen trabajo" dicho sin contexto no genera el mismo impacto que uno específico y oportuno.',
+    },
+    suggestion: 'Practicá el reconocimiento en las 24 horas de ocurrido el hecho. Usá la fórmula: "Vi que [acción concreta] → generó [impacto real] → eso hace la diferencia porque [por qué importa]".'
+  }
+];
+
+const QUESTIONS = [
+  // D1
+  { text: 'Siento que mi trabajo es valorado en este equipo.', dim: 0 },
+  { text: 'Cuando hago un buen trabajo, siento que alguien lo nota.', dim: 0 },
+  { text: 'El ambiente en mi equipo me hace sentir motivado/a a dar lo mejor de mí.', dim: 0 },
+  { text: 'Me siento visto/a como persona, no solo por mis resultados.', dim: 0 },
+  // D2
+  { text: 'Recibo reconocimiento personalizado por mis contribuciones específicas (no genérico para todo el equipo).', dim: 1 },
+  { text: 'Cuando el equipo logra algo importante, lo celebramos juntos.', dim: 1 },
+  { text: 'El reconocimiento en mi equipo llega tanto a las personas que lideran como a las que ejecutan.', dim: 1 },
+  { text: 'Siento que el reconocimiento es equitativo — no siempre recae en las mismas personas.', dim: 1 },
+  // D3
+  { text: 'En mi equipo se reconoce cuando alguien alcanza un resultado o meta concreta.', dim: 2 },
+  { text: 'En mi equipo se reconoce la forma en que las personas trabajan (colaboración, actitud, esfuerzo), no solo los resultados.', dim: 2 },
+  { text: 'Siento que se valoran los logros del proceso, aunque el resultado final no haya sido el esperado.', dim: 2 },
+  // D4
+  { text: 'Mis compañeros/as me reconocen cuando hago algo que aporta al equipo.', dim: 3 },
+  { text: 'Yo reconozco activamente a mis compañeros/as cuando hacen algo valioso.', dim: 3 },
+  { text: 'En mi equipo existe una cultura de agradecimiento entre pares, no solo desde los líderes.', dim: 3 },
+  // D5
+  { text: 'El reconocimiento que recibo llega en el momento oportuno (no semanas después).', dim: 4 },
+  { text: 'Cuando me reconocen, siento que es genuino y específico — no un halago genérico.', dim: 4 },
+  { text: 'Mi líder/referente demuestra que el reconocimiento es una prioridad para él/ella.', dim: 4 },
+  { text: 'Los espacios de celebración (reuniones, mails, canales de Teams) se usan para reconocer de verdad, no solo de manera formal.', dim: 4 },
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+
+let currentUser = '';
+let currentTeam = '';
+let answers = new Array(18).fill(null);
+let openAnswer = '';
+
+// ════════════════════════════════════════
+// STORAGE HELPERS
+// ════════════════════════════════════════
+
+function teamKey(team) {
+  return 'recog_' + team.toLowerCase().replace(/\s+/g, '_');
+}
+
+function loadTeamData(team) {
+  try {
+    return JSON.parse(localStorage.getItem(teamKey(team))) || { responses: [] };
+  } catch {
+    return { responses: [] };
+  }
+}
+
+function saveTeamData(team, data) {
+  localStorage.setItem(teamKey(team), JSON.stringify(data));
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function backToStart() { showScreen('screen-start'); }
+
+// ════════════════════════════════════════
+// START SCREEN ACTIONS
+// ════════════════════════════════════════
+
+function startQuiz() {
+  const name = document.getElementById('input-name').value.trim();
+  const team = document.getElementById('input-team').value.trim();
+  const err  = document.getElementById('start-error');
+
+  if (!name || !team) {
+    err.textContent = 'Por favor ingresá tu nombre y el nombre de tu equipo.';
+    err.classList.add('visible');
+    return;
+  }
+  err.classList.remove('visible');
+
+  currentUser = name;
+  currentTeam = team;
+  answers = new Array(18).fill(null);
+  openAnswer = '';
+
+  document.getElementById('quiz-context-text').textContent =
+    name + ' · ' + team;
+
+  buildQuestionnaire();
+  updateProgress();
+  showScreen('screen-quiz');
+}
+
+function viewTeamReport() {
+  const team = document.getElementById('input-team').value.trim();
+  const err  = document.getElementById('start-error');
+
+  if (!team) {
+    err.textContent = 'Ingresá el nombre del equipo para ver su informe.';
+    err.classList.add('visible');
+    return;
+  }
+  err.classList.remove('visible');
+
+  currentTeam = team;
+  const data = loadTeamData(team);
+  if (!data.responses || data.responses.length === 0) {
+    err.textContent = 'Todavía no hay respuestas registradas para ese equipo.';
+    err.classList.add('visible');
+    return;
+  }
+  renderReport(data, team);
+  showScreen('screen-report');
+}
+
+// ════════════════════════════════════════
+// QUESTIONNAIRE
+// ════════════════════════════════════════
+
+function buildQuestionnaire() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = '';
+
+  let currentDim = -1;
+
+  QUESTIONS.forEach((q, i) => {
+    if (q.dim !== currentDim) {
+      currentDim = q.dim;
+      const dimLabel = document.createElement('div');
+      dimLabel.className = 'dimension-label';
+      dimLabel.style.marginTop = i > 0 ? '28px' : '0';
+      dimLabel.textContent = 'Dimensión ' + (currentDim + 1) + ' — ' + DIMENSIONS[currentDim].name;
+      container.appendChild(dimLabel);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.innerHTML = `
+      <div class="question-text">
+        <span class="question-num">${i + 1}</span>${q.text}
+      </div>
+      <div class="likert-scale" id="likert-${i}">
+        ${LIKERT_LABELS.map((lbl, v) => `
+          <button class="likert-btn" data-q="${i}" data-v="${v + 1}" onclick="selectAnswer(${i}, ${v + 1})">
+            <span class="num">${v + 1}</span>
+            <span class="lbl">${lbl}</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Open question
+  const openCard = document.createElement('div');
+  openCard.className = 'question-card open-question';
+  openCard.innerHTML = `
+    <div class="question-text">
+      <span class="question-num">19</span>
+      ¿Qué ideas o propuestas tenés para que tu equipo se reconozca más y mejor?
+      <span class="optional-tag">Opcional</span>
+    </div>
+    <textarea id="open-answer" placeholder="Escribí tus ideas aquí..." oninput="openAnswer = this.value"></textarea>
+  `;
+  container.appendChild(openCard);
+}
+
+function selectAnswer(qIndex, value) {
+  answers[qIndex] = value;
+
+  const scale = document.getElementById('likert-' + qIndex);
+  scale.querySelectorAll('.likert-btn').forEach(btn => {
+    btn.classList.toggle('selected', parseInt(btn.dataset.v) === value);
+  });
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const answered = answers.filter(a => a !== null).length;
+  const pct = Math.round((answered / 18) * 100);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+
+  // Find current dimension
+  const firstUnanswered = answers.findIndex(a => a === null);
+  const dimIdx = firstUnanswered === -1
+    ? 4
+    : QUESTIONS[firstUnanswered].dim;
+  document.getElementById('progress-label').textContent =
+    'Dimensión ' + (dimIdx + 1) + ' de 5';
+}
+
+// ════════════════════════════════════════
+// SUBMIT
+// ════════════════════════════════════════
+
+function submitQuiz() {
+  const unanswered = answers.filter(a => a === null).length;
+  const errEl = document.getElementById('quiz-error');
+
+  if (unanswered > 0) {
+    errEl.textContent = `Por favor respondé todas las preguntas antes de enviar. Te faltan ${unanswered}.`;
+    errEl.classList.add('visible');
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  errEl.classList.remove('visible');
+
+  // Save to localStorage
+  const data = loadTeamData(currentTeam);
+  data.responses.push({
+    name: currentUser,
+    timestamp: new Date().toISOString(),
+    answers: [...answers],
+    open: document.getElementById('open-answer').value.trim()
+  });
+  saveTeamData(currentTeam, data);
+
+  renderReport(data, currentTeam);
+  showScreen('screen-report');
+}
+
+// ════════════════════════════════════════
+// SCORING
+// ════════════════════════════════════════
+
+function getStatus(score) {
+  if (score >= 4.5) return { label: 'Fortaleza consolidada', cls: 's-green'  };
+  if (score >= 3.5) return { label: 'En desarrollo',          cls: 's-yellow' };
+  if (score >= 2.5) return { label: 'Área de oportunidad',    cls: 's-orange' };
+  return                  { label: 'Brecha crítica',           cls: 's-red'   };
+}
+
+function computeDimScores(responses) {
+  return DIMENSIONS.map(dim => {
+    const allScores = [];
+    responses.forEach(r => {
+      dim.questions.forEach(qi => allScores.push(r.answers[qi]));
+    });
+    const avg = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+    return Math.round(avg * 10) / 10;
+  });
+}
+
+function computeQuestionStats(responses) {
+  return QUESTIONS.map((_, qi) => {
+    const vals = responses.map(r => r.answers[qi]);
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+    return { min, max, avg: Math.round(avg * 10) / 10, gap: max - min };
+  });
+}
+
+// ════════════════════════════════════════
+// REPORT RENDERING
+// ════════════════════════════════════════
+
+function barColor(score) {
+  if (score >= 4.5) return '#3a7d5a';
+  if (score >= 3.5) return '#c49a1a';
+  if (score >= 2.5) return '#c4611a';
+  return '#b02a2a';
+}
+
+function renderReport(data, teamName) {
+  const responses  = data.responses;
+  const n          = responses.length;
+  const dimScores  = computeDimScores(responses);
+  const qStats     = computeQuestionStats(responses);
+
+  const maxIdx = dimScores.indexOf(Math.max(...dimScores));
+  const minIdx = dimScores.indexOf(Math.min(...dimScores));
+
+  const dateStr = new Date().toLocaleDateString('es-AR', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // Dispersión (solo si n > 1)
+  const highGap = n > 1
+    ? qStats.map((s, i) => ({ ...s, qi: i })).filter(s => s.gap > 2)
+    : [];
+
+  // Open answers
+  const openAnswers = responses.filter(r => r.open && r.open.trim().length > 0);
+
+  const container = document.getElementById('report-container');
+
+  container.innerHTML = `
+    <div class="report-header">
+      <div class="badge">✦ Informe de resultados</div>
+      <h2>${teamName}</h2>
+      <div class="meta">${dateStr}</div>
+      <div class="respondents">👥 ${n} persona${n !== 1 ? 's' : ''} respondió${n !== 1 ? 'eron' : ''}</div>
+    </div>
+
+    <!-- ── Summary table ── -->
+    <div class="card">
+      <div class="section-title">Resumen por dimensión</div>
+      <table class="dim-table">
+        <thead>
+          <tr>
+            <th>Dimensión</th>
+            <th style="text-align:right">Puntaje</th>
+            <th style="text-align:right">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${DIMENSIONS.map((dim, i) => {
+            const sc  = dimScores[i];
+            const st  = getStatus(sc);
+            const pct = ((sc - 1) / 4) * 100;
+            return `
+            <tr>
+              <td>
+                <div class="dim-name">${dim.name}</div>
+                <div class="score-bar-wrap" style="margin-top:6px;">
+                  <div class="score-bar-track">
+                    <div class="score-bar-fill" style="width:${pct}%;background:${barColor(sc)}"></div>
+                  </div>
+                </div>
+              </td>
+              <td style="text-align:right;vertical-align:middle;">
+                <span class="dim-score" style="color:${barColor(sc)}">${sc.toFixed(1)}<span class="total">/5</span></span>
+              </td>
+              <td style="text-align:right;vertical-align:middle;">
+                <span class="status-pill ${st.cls}"><span class="dot"></span>${st.label}</span>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Strength / Opportunity ── -->
+    <div class="section-title" style="margin-top:8px;">Fortaleza y oportunidad principal</div>
+
+    <div class="insight-card strength">
+      <div class="ic-label">✦ Fortaleza principal</div>
+      <div class="ic-dim">${DIMENSIONS[maxIdx].name} — ${dimScores[maxIdx].toFixed(1)}/5</div>
+      <div class="ic-text">${DIMENSIONS[maxIdx].interpretations.strength}</div>
+    </div>
+
+    <div class="insight-card opportunity">
+      <div class="ic-label">⚑ Oportunidad principal</div>
+      <div class="ic-dim">${DIMENSIONS[minIdx].name} — ${dimScores[minIdx].toFixed(1)}/5</div>
+      <div class="ic-text">${DIMENSIONS[minIdx].interpretations.opportunity}</div>
+      <div class="ic-action">${DIMENSIONS[minIdx].suggestion}</div>
+    </div>
+
+    <!-- ── Dispersion ── -->
+    ${n > 1 ? `
+    <div class="card" style="margin-top:20px;">
+      <div class="section-title">Dispersión de respuestas</div>
+      ${highGap.length > 0 ? `
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">
+          Las siguientes preguntas muestran más de 2 puntos de diferencia entre la respuesta más alta y la más baja del equipo. Esto puede indicar experiencias muy distintas dentro del mismo grupo.
+        </p>
+        ${highGap.map(s => `
+          <div class="dispersion-item">
+            <div class="dispersion-q"><strong>P${s.qi + 1}.</strong> ${QUESTIONS[s.qi].text}</div>
+            <div class="dispersion-range">
+              <span class="d-min">Mín: ${s.min}</span>
+              <span style="color:var(--border)">—</span>
+              <span class="d-max">Máx: ${s.max}</span>
+              <span class="d-gap">(diferencia: ${s.gap} pts · prom: ${s.avg})</span>
+            </div>
+          </div>
+        `).join('')}
+      ` : `<p class="no-data-msg">No se detectaron dispersiones significativas (>2 puntos) en ninguna pregunta. ¡Las experiencias del equipo son consistentes!</p>`}
+    </div>
+    ` : ''}
+
+    <!-- ── Open answers ── -->
+    ${openAnswers.length > 0 ? `
+    <div class="card" style="margin-top:20px;">
+      <div class="section-title">Ideas del equipo (P19)</div>
+      ${openAnswers.map(r => `
+        <div class="open-answer">
+          <div class="responder">${r.name}</div>
+          "${r.open}"
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+
+    <!-- ── Actions ── -->
+    <div class="report-actions">
+      <button class="btn btn-primary" onclick="downloadPDF()">⬇ Descargar PDF</button>
+      <button class="btn btn-secondary" onclick="backToStart()">← Volver al inicio</button>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════
+// PDF DOWNLOAD
+// ════════════════════════════════════════
+
+function downloadPDF() {
+  window.print();
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+
+// Restore team name if stored
+window.addEventListener('DOMContentLoaded', () => {
+  const lastTeam = localStorage.getItem('recog_last_team');
+  if (lastTeam) {
+    document.getElementById('input-team').value = lastTeam;
+  }
+});
+
+document.getElementById('input-team').addEventListener('input', function() {
+  localStorage.setItem('recog_last_team', this.value.trim());
+});
+
+</script>
+</body>
+</html>
