@@ -663,6 +663,12 @@ const QUESTIONS = [
 ];
 
 // ════════════════════════════════════════
+// CONFIG — pegá aquí tu URL de Apps Script
+// ════════════════════════════════════════
+
+const SCRIPT_URL = 'PEGÁ_AQUÍ_TU_URL_DE_APPS_SCRIPT';
+
+// ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
 
@@ -672,23 +678,21 @@ let answers = new Array(18).fill(null);
 let openAnswer = '';
 
 // ════════════════════════════════════════
-// STORAGE HELPERS
+// API HELPERS
 // ════════════════════════════════════════
 
-function teamKey(team) {
-  return 'recog_' + team.toLowerCase().replace(/\s+/g, '_');
+async function apiPost(payload) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  return res.json();
 }
 
-function loadTeamData(team) {
-  try {
-    return JSON.parse(localStorage.getItem(teamKey(team))) || { responses: [] };
-  } catch {
-    return { responses: [] };
-  }
-}
-
-function saveTeamData(team, data) {
-  localStorage.setItem(teamKey(team), JSON.stringify(data));
+async function apiGetTeam(team) {
+  const url = SCRIPT_URL + '?team=' + encodeURIComponent(team.toLowerCase().trim());
+  const res = await fetch(url);
+  return res.json();
 }
 
 // ════════════════════════════════════════
@@ -702,6 +706,14 @@ function showScreen(id) {
 }
 
 function backToStart() { showScreen('screen-start'); }
+
+function showLoading(container, msg) {
+  container.innerHTML = `
+    <div style="text-align:center;padding:60px 20px;">
+      <div style="font-size:32px;margin-bottom:16px;">⏳</div>
+      <div style="color:var(--text-muted);font-size:15px;">${msg}</div>
+    </div>`;
+}
 
 // ════════════════════════════════════════
 // START SCREEN ACTIONS
@@ -717,6 +729,11 @@ function startQuiz() {
     err.classList.add('visible');
     return;
   }
+  if (SCRIPT_URL === 'PEGÁ_AQUÍ_TU_URL_DE_APPS_SCRIPT') {
+    err.textContent = 'Falta configurar la URL de Google Apps Script en el archivo HTML.';
+    err.classList.add('visible');
+    return;
+  }
   err.classList.remove('visible');
 
   currentUser = name;
@@ -724,15 +741,14 @@ function startQuiz() {
   answers = new Array(18).fill(null);
   openAnswer = '';
 
-  document.getElementById('quiz-context-text').textContent =
-    name + ' · ' + team;
+  document.getElementById('quiz-context-text').textContent = name + ' · ' + team;
 
   buildQuestionnaire();
   updateProgress();
   showScreen('screen-quiz');
 }
 
-function viewTeamReport() {
+async function viewTeamReport() {
   const team = document.getElementById('input-team').value.trim();
   const err  = document.getElementById('start-error');
 
@@ -741,17 +757,39 @@ function viewTeamReport() {
     err.classList.add('visible');
     return;
   }
-  err.classList.remove('visible');
-
-  currentTeam = team;
-  const data = loadTeamData(team);
-  if (!data.responses || data.responses.length === 0) {
-    err.textContent = 'Todavía no hay respuestas registradas para ese equipo.';
+  if (SCRIPT_URL === 'PEGÁ_AQUÍ_TU_URL_DE_APPS_SCRIPT') {
+    err.textContent = 'Falta configurar la URL de Google Apps Script en el archivo HTML.';
     err.classList.add('visible');
     return;
   }
-  renderReport(data, team);
+  err.classList.remove('visible');
+
+  currentTeam = team;
   showScreen('screen-report');
+  showLoading(document.getElementById('report-container'), 'Cargando informe del equipo…');
+
+  try {
+    const data = await apiGetTeam(team);
+    if (!data.ok) throw new Error(data.error);
+    if (!data.responses || data.responses.length === 0) {
+      document.getElementById('report-container').innerHTML =
+        `<div class="no-data-msg" style="padding:60px 20px;">
+           <div style="font-size:40px;margin-bottom:12px;">📭</div>
+           <div>Todavía no hay respuestas para el equipo <strong>${team}</strong>.</div>
+           <button class="btn btn-secondary" style="margin-top:20px;max-width:260px;" onclick="backToStart()">← Volver</button>
+         </div>`;
+      return;
+    }
+    renderReport(data, team);
+  } catch (e) {
+    document.getElementById('report-container').innerHTML =
+      `<div class="no-data-msg" style="padding:60px 20px;">
+         <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+         <div>Error al conectar con Google Sheets. Revisá la URL del script.</div>
+         <div style="font-size:12px;margin-top:8px;color:#999;">${e.message}</div>
+         <button class="btn btn-secondary" style="margin-top:20px;max-width:260px;" onclick="backToStart()">← Volver</button>
+       </div>`;
+  }
 }
 
 // ════════════════════════════════════════
@@ -837,7 +875,7 @@ function updateProgress() {
 // SUBMIT
 // ════════════════════════════════════════
 
-function submitQuiz() {
+async function submitQuiz() {
   const unanswered = answers.filter(a => a === null).length;
   const errEl = document.getElementById('quiz-error');
 
@@ -849,18 +887,37 @@ function submitQuiz() {
   }
   errEl.classList.remove('visible');
 
-  // Save to localStorage
-  const data = loadTeamData(currentTeam);
-  data.responses.push({
+  const submitBtn = document.querySelector('#screen-quiz .btn-primary');
+  submitBtn.textContent = 'Guardando…';
+  submitBtn.disabled = true;
+
+  const payload = {
     name: currentUser,
-    timestamp: new Date().toISOString(),
+    team: currentTeam,
     answers: [...answers],
     open: document.getElementById('open-answer').value.trim()
-  });
-  saveTeamData(currentTeam, data);
+  };
 
-  renderReport(data, currentTeam);
   showScreen('screen-report');
+  showLoading(document.getElementById('report-container'), 'Guardando respuestas y generando informe…');
+
+  try {
+    await apiPost(payload);
+    const data = await apiGetTeam(currentTeam);
+    if (!data.ok) throw new Error(data.error);
+    renderReport(data, currentTeam);
+  } catch (e) {
+    document.getElementById('report-container').innerHTML =
+      `<div class="no-data-msg" style="padding:60px 20px;">
+         <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+         <div>Error al guardar en Google Sheets.</div>
+         <div style="font-size:12px;margin-top:8px;color:#999;">${e.message}</div>
+         <button class="btn btn-secondary" style="margin-top:20px;max-width:260px;" onclick="backToStart()">← Volver</button>
+       </div>`;
+  } finally {
+    submitBtn.textContent = 'Enviar respuestas y ver informe ✦';
+    submitBtn.disabled = false;
+  }
 }
 
 // ════════════════════════════════════════
@@ -1047,12 +1104,9 @@ function downloadPDF() {
 // INIT
 // ════════════════════════════════════════
 
-// Restore team name if stored
 window.addEventListener('DOMContentLoaded', () => {
   const lastTeam = localStorage.getItem('recog_last_team');
-  if (lastTeam) {
-    document.getElementById('input-team').value = lastTeam;
-  }
+  if (lastTeam) document.getElementById('input-team').value = lastTeam;
 });
 
 document.getElementById('input-team').addEventListener('input', function() {
