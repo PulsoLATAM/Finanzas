@@ -729,11 +729,6 @@ function startQuiz() {
     err.classList.add('visible');
     return;
   }
-  if (SCRIPT_URL === 'PEGÁ_AQUÍ_TU_URL_DE_APPS_SCRIPT') {
-    err.textContent = 'Falta configurar la URL de Google Apps Script en el archivo HTML.';
-    err.classList.add('visible');
-    return;
-  }
   err.classList.remove('visible');
 
   currentUser = name;
@@ -754,11 +749,6 @@ async function viewTeamReport() {
 
   if (!team) {
     err.textContent = 'Ingresá el nombre del equipo para ver su informe.';
-    err.classList.add('visible');
-    return;
-  }
-  if (SCRIPT_URL === 'PEGÁ_AQUÍ_TU_URL_DE_APPS_SCRIPT') {
-    err.textContent = 'Falta configurar la URL de Google Apps Script en el archivo HTML.';
     err.classList.add('visible');
     return;
   }
