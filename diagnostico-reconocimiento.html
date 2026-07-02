@@ -515,12 +515,9 @@
 
     <div class="card">
       <div class="form-group">
-        <label for="input-name">Tu nombre</label>
-        <input type="text" id="input-name" placeholder="Ej: María González" autocomplete="off">
-      </div>
-      <div class="form-group">
         <label for="input-team">Nombre del equipo</label>
         <input type="text" id="input-team" placeholder="Ej: Equipo Comercial" autocomplete="off">
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Escribí el nombre exactamente igual que el resto de tu equipo para que todas las respuestas sean incluidas en el informe final.</div>
       </div>
       <div class="btn-row" style="margin-top: 8px;">
         <button class="btn btn-primary" onclick="startQuiz()">Responder el cuestionario →</button>
@@ -724,19 +721,19 @@ function startQuiz() {
   const team = document.getElementById('input-team').value.trim();
   const err  = document.getElementById('start-error');
 
-  if (!name || !team) {
-    err.textContent = 'Por favor ingresá tu nombre y el nombre de tu equipo.';
+  if (!team) {
+    err.textContent = 'Por favor ingresá el nombre de tu equipo.';
     err.classList.add('visible');
     return;
   }
   err.classList.remove('visible');
 
-  currentUser = name;
+  currentUser = 'Anónimo';
   currentTeam = team;
   answers = new Array(18).fill(null);
   openAnswer = '';
 
-  document.getElementById('quiz-context-text').textContent = name + ' · ' + team;
+  document.getElementById('quiz-context-text').textContent = team;
 
   buildQuestionnaire();
   updateProgress();
@@ -981,7 +978,7 @@ function renderReport(data, teamName) {
       <div class="badge">✦ Informe de resultados</div>
       <h2>${teamName}</h2>
       <div class="meta">${dateStr}</div>
-      <div class="respondents">👥 ${n} persona${n !== 1 ? 's' : ''} respondió${n !== 1 ? 'eron' : ''}</div>
+      ${n >= 5 ? `<div class="respondents">👥 ${n} personas respondieron</div>` : ''}
     </div>
 
     <!-- ── Summary table ── -->
@@ -1066,10 +1063,7 @@ function renderReport(data, teamName) {
     <div class="card" style="margin-top:20px;">
       <div class="section-title">Ideas del equipo (P19)</div>
       ${openAnswers.map(r => `
-        <div class="open-answer">
-          <div class="responder">${r.name}</div>
-          "${r.open}"
-        </div>
+        <div class="open-answer">"${r.open}"</div>
       `).join('')}
     </div>
     ` : ''}
