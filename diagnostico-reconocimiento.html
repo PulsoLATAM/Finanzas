@@ -516,8 +516,11 @@
     <div class="card">
       <div class="form-group">
         <label for="input-team">Nombre del equipo</label>
-        <input type="text" id="input-team" placeholder="Ej: Equipo Comercial" autocomplete="off">
+        <input type="text" id="input-team" placeholder="Ej: Equipo Comercial" autocomplete="off" oninput="updateTeamPreview()">
         <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Escribí el nombre exactamente igual que el resto de tu equipo para que todas las respuestas sean incluidas en el informe final.</div>
+        <div id="team-preview" style="display:none;margin-top:8px;background:var(--terracotta-light);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--terracotta);">
+          Tu equipo quedará registrado como: <strong id="team-preview-value"></strong>
+        </div>
       </div>
       <div class="btn-row" style="margin-top: 8px;">
         <button class="btn btn-primary" onclick="startQuiz()">Responder el cuestionario →</button>
@@ -527,7 +530,7 @@
     </div>
 
     <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-top:12px;">
-      🔒 Tus respuestas se guardan localmente. No se envían a ningún servidor.
+      🔒 Este formulario es 100% anónimo, por lo que te invitamos a responder con honestidad, pensando cómo te sentís sobre cada una de las afirmaciones.
     </div>
 
   </div>
@@ -560,6 +563,28 @@
       <div id="quiz-error" class="error-msg">Por favor respondé todas las preguntas antes de enviar.</div>
       <button class="btn btn-primary" onclick="submitQuiz()">Enviar respuestas y ver informe ✦</button>
       <button class="btn btn-outline" onclick="backToStart()">← Volver al inicio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCREEN 2b: CONFIRM
+════════════════════════════════════════ -->
+<div id="screen-confirm" class="screen">
+  <div class="container" style="max-width:480px;">
+    <div class="start-hero" style="padding:40px 0 24px;">
+      <div class="icon-big">✅</div>
+      <h2 style="font-size:22px;">¿Enviamos tus respuestas?</h2>
+      <p>Una vez enviadas no podrás editarlas. Confirmá que respondiste con calma y honestidad.</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">
+        Equipo: <strong id="confirm-team" style="color:var(--text);"></strong>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="confirmAndSubmit()">Sí, enviar respuestas ✦</button>
+        <button class="btn btn-outline" onclick="showScreen('screen-quiz')">← Volver a revisar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -674,6 +699,31 @@ let currentTeam = '';
 let answers = new Array(18).fill(null);
 let openAnswer = '';
 
+function getAnonymousId() {
+  let id = localStorage.getItem('recog_anon_id');
+  if (!id) {
+    id = 'anon_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('recog_anon_id', id);
+  }
+  return id;
+}
+
+function normalizeTeam(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function updateTeamPreview() {
+  const val = document.getElementById('input-team').value.trim();
+  const preview = document.getElementById('team-preview');
+  const previewVal = document.getElementById('team-preview-value');
+  if (val.length > 0) {
+    previewVal.textContent = normalizeTeam(val);
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
 // ════════════════════════════════════════
 // API HELPERS
 // ════════════════════════════════════════
@@ -717,7 +767,6 @@ function showLoading(container, msg) {
 // ════════════════════════════════════════
 
 function startQuiz() {
-  const name = document.getElementById('input-name').value.trim();
   const team = document.getElementById('input-team').value.trim();
   const err  = document.getElementById('start-error');
 
@@ -728,12 +777,12 @@ function startQuiz() {
   }
   err.classList.remove('visible');
 
-  currentUser = 'Anónimo';
-  currentTeam = team;
+  currentUser = getAnonymousId();
+  currentTeam = normalizeTeam(team);
   answers = new Array(18).fill(null);
   openAnswer = '';
 
-  document.getElementById('quiz-context-text').textContent = team;
+  document.getElementById('quiz-context-text').textContent = currentTeam;
 
   buildQuestionnaire();
   updateProgress();
@@ -751,7 +800,7 @@ async function viewTeamReport() {
   }
   err.classList.remove('visible');
 
-  currentTeam = team;
+  currentTeam = normalizeTeam(team);
   showScreen('screen-report');
   showLoading(document.getElementById('report-container'), 'Cargando informe del equipo…');
 
@@ -862,7 +911,7 @@ function updateProgress() {
 // SUBMIT
 // ════════════════════════════════════════
 
-async function submitQuiz() {
+function submitQuiz() {
   const unanswered = answers.filter(a => a === null).length;
   const errEl = document.getElementById('quiz-error');
 
@@ -874,9 +923,14 @@ async function submitQuiz() {
   }
   errEl.classList.remove('visible');
 
-  const submitBtn = document.querySelector('#screen-quiz .btn-primary');
-  submitBtn.textContent = 'Guardando…';
-  submitBtn.disabled = true;
+  document.getElementById('confirm-team').textContent = currentTeam;
+  showScreen('screen-confirm');
+}
+
+async function confirmAndSubmit() {
+  const confirmBtn = document.querySelector('#screen-confirm .btn-primary');
+  confirmBtn.textContent = 'Guardando…';
+  confirmBtn.disabled = true;
 
   const payload = {
     name: currentUser,
@@ -902,8 +956,8 @@ async function submitQuiz() {
          <button class="btn btn-secondary" style="margin-top:20px;max-width:260px;" onclick="backToStart()">← Volver</button>
        </div>`;
   } finally {
-    submitBtn.textContent = 'Enviar respuestas y ver informe ✦';
-    submitBtn.disabled = false;
+    confirmBtn.textContent = 'Sí, enviar respuestas ✦';
+    confirmBtn.disabled = false;
   }
 }
 
@@ -978,7 +1032,7 @@ function renderReport(data, teamName) {
       <div class="badge">✦ Informe de resultados</div>
       <h2>${teamName}</h2>
       <div class="meta">${dateStr}</div>
-      ${n >= 5 ? `<div class="respondents">👥 ${n} personas respondieron</div>` : ''}
+      <div class="respondents">👥 ${n >= 5 ? `${n} personas respondieron` : 'Menos de 5 respuestas'}</div>
     </div>
 
     <!-- ── Summary table ── -->
